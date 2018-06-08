@@ -1,9 +1,9 @@
 # MQTT Producer Output Plugin
 
-This plugin writes to a [MQTT Broker](http://http://mqtt.org/) acting as a mqtt Producer.
+This plugin writes to the [Wind River Helix Device Cloud](https://helixdevicecloud.com) MQTT API acting as a mqtt Producer.
 
 ```toml
-[[outputs.mqtt]]
+[[outputs.wrhdc]]
   ## URLs of mqtt brokers
   servers = ["localhost:1883"]
 
