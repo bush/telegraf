@@ -3,7 +3,6 @@ package wrhdc
 import (
 	"testing"
 
-	"github.com/influxdata/telegraf/plugins/serializers"
 	"github.com/influxdata/telegraf/testutil"
 
 	"github.com/stretchr/testify/require"
@@ -15,10 +14,8 @@ func TestConnectAndWrite(t *testing.T) {
 	}
 
 	var url = testutil.GetLocalHost() + ":1883"
-	s, _ := serializers.NewInfluxSerializer()
 	m := &MQTT{
 		Servers:    []string{url},
-		serializer: s,
 	}
 
 	// Verify that we can connect to the MQTT broker

@@ -2,15 +2,15 @@ package wrhdc
 
 import (
 	"fmt"
-	"strings"
+	//"strings"
 	"sync"
 	"time"
+	"encoding/json"
 
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/internal"
 	"github.com/influxdata/telegraf/internal/tls"
 	"github.com/influxdata/telegraf/plugins/outputs"
-	"github.com/influxdata/telegraf/plugins/serializers"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
 )
@@ -72,8 +72,6 @@ type MQTT struct {
 	client paho.Client
 	opts   *paho.ClientOptions
 
-	serializer serializers.Serializer
-
 	sync.Mutex
 }
 
@@ -98,10 +96,6 @@ func (m *MQTT) Connect() error {
 	return nil
 }
 
-func (m *MQTT) SetSerializer(serializer serializers.Serializer) {
-	m.serializer = serializer
-}
-
 func (m *MQTT) Close() error {
 	if m.client.IsConnected() {
 		m.client.Disconnect(20)
@@ -123,35 +117,35 @@ func (m *MQTT) Write(metrics []telegraf.Metric) error {
 	if len(metrics) == 0 {
 		return nil
 	}
-	hostname, ok := metrics[0].Tags()["host"]
-	if !ok {
-		hostname = ""
-	}
+	//hostname, ok := metrics[0].Tags()["host"]
+	//if !ok {
+	//	hostname = ""
+	//}
 
 	metricsmap := make(map[string][]telegraf.Metric)
 
 	for _, metric := range metrics {
-		var t []string
-		if m.TopicPrefix != "" {
-			t = append(t, m.TopicPrefix)
-		}
-		if hostname != "" {
-			t = append(t, hostname)
-		}
+		//var t []string
+		//if m.TopicPrefix != "" {
+		//	t = append(t, m.TopicPrefix)
+		//}
+		//if hostname != "" {
+		//	t = append(t, hostname)
+		//}
 
-		t = append(t, metric.Name())
-		topic := strings.Join(t, "/")
+		//t = append(t, metric.Name())
+		//topic := strings.Join(t, "/")
 
 		if m.BatchMessage {
-			metricsmap[topic] = append(metricsmap[topic], metric)
+			metricsmap[m.TopicPrefix] = append(metricsmap[m.TopicPrefix], metric)
 		} else {
-			buf, err := m.serializer.Serialize(metric)
+			buf, err := serialize(metric, m.Username)
 
 			if err != nil {
 				return err
 			}
 
-			err = m.publish(topic, buf)
+			err = m.publish(m.TopicPrefix, buf)
 			if err != nil {
 				return fmt.Errorf("Could not write to MQTT server, %s", err)
 			}
@@ -159,7 +153,7 @@ func (m *MQTT) Write(metrics []telegraf.Metric) error {
 	}
 
 	for key := range metricsmap {
-		buf, err := m.serializer.SerializeBatch(metricsmap[key])
+		buf, err := serializeBatch(metricsmap[key], m.Username)
 
 		if err != nil {
 			return err
@@ -229,8 +223,69 @@ func (m *MQTT) createOpts() (*paho.ClientOptions, error) {
 	return opts, nil
 }
 
+func serialize(metric telegraf.Metric, thingKey string) ([]byte, error) {
+	m := createObject(metric, thingKey)
+	serialized, err := json.Marshal(m)
+	if err != nil {
+		return []byte{}, err
+	}
+	serialized = append(serialized, '\n')
+
+	return serialized, nil
+}
+
+func serializeBatch(metrics []telegraf.Metric, thingKey string) ([]byte, error) {
+	objects := make([]interface{}, 0, len(metrics))
+	for _, metric := range metrics {
+		m := createObject(metric, thingKey)
+		objects = append(objects, m)
+	}
+
+	obj := map[string]interface{}{
+		"metrics": objects,
+	}
+
+	serialized, err := json.Marshal(obj)
+	if err != nil {
+		return []byte{}, err
+	}
+	return serialized, nil
+}
+
+func createObject(metric telegraf.Metric, thingKey string) map[string]interface{} {
+
+  timestamp := metric.Time().Format(time.RFC3339)
+  tag := metric.Name()
+  for _, value := range metric.Tags() {
+    tag += "-" + value
+  }
+
+  // Maps the fields to an array of key/value pairs
+  var data[]map[string]interface{}
+	for key, value := range metric.Fields() {
+      keyname := tag + "-" + key
+      data = append(data,map[string]interface{}{"key": keyname, "value": value, "ts": timestamp})
+	}
+
+  m := map[string]interface{}{
+    "cmd": map[string]interface{}{
+      "command": "property.batch",
+      "params": map[string]interface{}{
+        "thingKey": thingKey,
+        "key": "my-global-key",
+        "ts": timestamp,
+        "corrid": "my-corr-id",
+        "aggregate":"true",
+        "data":data,
+      },
+    },
+  }
+
+  return m
+}
+
 func init() {
-	outputs.Add("mqtt", func() telegraf.Output {
+	outputs.Add("wrhdc", func() telegraf.Output {
 		return &MQTT{}
 	})
 }
