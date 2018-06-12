@@ -72,7 +72,7 @@ type MQTT struct {
 	client paho.Client
 	opts   *paho.ClientOptions
 
-	serializer serializers.Serializer
+	//serializer serializers.Serializer
 
 	sync.Mutex
 }
@@ -98,9 +98,9 @@ func (m *MQTT) Connect() error {
 	return nil
 }
 
-func (m *MQTT) SetSerializer(serializer serializers.Serializer) {
-	m.serializer = serializer
-}
+//func (m *MQTT) SetSerializer(serializer serializers.Serializer) {
+//	m.serializer = serializer
+//}
 
 func (m *MQTT) Close() error {
 	if m.client.IsConnected() {
@@ -128,7 +128,6 @@ func (m *MQTT) Write(metrics []telegraf.Metric) error {
 		hostname = ""
 	}
 
-  m.serializer.SetThingKey(m.Username)
 	metricsmap := make(map[string][]telegraf.Metric)
 
 	for _, metric := range metrics {
@@ -146,7 +145,7 @@ func (m *MQTT) Write(metrics []telegraf.Metric) error {
 		if m.BatchMessage {
 			metricsmap[topic] = append(metricsmap[topic], metric)
 		} else {
-			buf, err := m.serializer.Serialize(metric)
+			//buf, err := m.serializer.Serialize(metric)
 
 			if err != nil {
 				return err
@@ -160,7 +159,7 @@ func (m *MQTT) Write(metrics []telegraf.Metric) error {
 	}
 
 	for key := range metricsmap {
-		buf, err := m.serializer.SerializeBatch(metricsmap[key])
+		//buf, err := m.serializer.SerializeBatch(metricsmap[key])
 
 		if err != nil {
 			return err
@@ -230,8 +229,25 @@ func (m *MQTT) createOpts() (*paho.ClientOptions, error) {
 	return opts, nil
 }
 
+func serialize(metric telegraf.Metric) ([]string, error) {
+
+}
+
+func serializeBatch(metric telegraf.Metric) ([]string, error) {
+
+}
+
+func (s *serializer) createObject(metric telegraf.Metric) map[string]interface{} {
+	m := make(map[string]interface{}, 4)
+	m["tags"] = metric.Tags()
+	m["fields"] = metric.Fields()
+	m["name"] = metric.Name()
+	m["timestamp"] = metric.Time().UnixNano() / int64(s.TimestampUnits)
+	return m
+}
+
 func init() {
-	outputs.Add("mqtt", func() telegraf.Output {
+	outputs.Add("windriverhdc", func() telegraf.Output {
 		return &MQTT{}
 	})
 }
