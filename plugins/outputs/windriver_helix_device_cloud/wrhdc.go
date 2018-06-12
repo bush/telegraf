@@ -2,7 +2,8 @@ package wrhdc
 
 import (
 	"fmt"
-	//"strings"
+	"strings"
+	"regexp"
 	"sync"
 	"time"
 	"encoding/json"
@@ -75,6 +76,19 @@ type MQTT struct {
 	sync.Mutex
 }
 
+var (
+	allowedChars = regexp.MustCompile(`[^a-zA-Z0-9-_]`)
+	hypenChars   = strings.NewReplacer(
+		"/", "-",
+		"@", "-",
+		"*", "-",
+	)
+	dropChars = strings.NewReplacer(
+		`\`, "",
+		"..", ".",
+	)
+)
+
 func (m *MQTT) Connect() error {
 	var err error
 	m.Lock()
@@ -117,24 +131,10 @@ func (m *MQTT) Write(metrics []telegraf.Metric) error {
 	if len(metrics) == 0 {
 		return nil
 	}
-	//hostname, ok := metrics[0].Tags()["host"]
-	//if !ok {
-	//	hostname = ""
-	//}
 
-	metricsmap := make(map[string][]telegraf.Metric)
+  metricsmap := make(map[string][]telegraf.Metric)
 
 	for _, metric := range metrics {
-		//var t []string
-		//if m.TopicPrefix != "" {
-		//	t = append(t, m.TopicPrefix)
-		//}
-		//if hostname != "" {
-		//	t = append(t, hostname)
-		//}
-
-		//t = append(t, metric.Name())
-		//topic := strings.Join(t, "/")
 
 		if m.BatchMessage {
 			metricsmap[m.TopicPrefix] = append(metricsmap[m.TopicPrefix], metric)
@@ -257,6 +257,7 @@ func createObject(metric telegraf.Metric, thingKey string) map[string]interface{
   timestamp := metric.Time().Format(time.RFC3339)
   tag := metric.Name()
   for _, value := range metric.Tags() {
+    value = sanitize(value)
     tag += "-" + value
   }
 
@@ -282,6 +283,15 @@ func createObject(metric telegraf.Metric, thingKey string) map[string]interface{
   }
 
   return m
+}
+
+func sanitize(value string) string {
+	// Apply special hypenation rules to preserve backwards compatibility
+	value = hypenChars.Replace(value)
+	// Apply rule to drop some chars to preserve backwards compatibility
+	value = dropChars.Replace(value)
+	// Replace any remaining illegal chars
+	return allowedChars.ReplaceAllLiteralString(value, "_")
 }
 
 func init() {
