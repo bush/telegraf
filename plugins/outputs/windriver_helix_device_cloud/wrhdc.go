@@ -60,15 +60,14 @@ var sampleConfig = `
 
 type MQTT struct {
 	Servers     []string `toml:"servers"`
-	Username    string
-	Password    string
+	ThingKey    string
+	AppToken    string
 	Database    string
 	Timeout     internal.Duration
-	TopicPrefix string
+	ApiTopic string
 	QoS         int    `toml:"qos"`
 	ClientID    string `toml:"client_id"`
 	tls.ClientConfig
-	BatchMessage bool `toml:"batch"`
 
 	client paho.Client
 	opts   *paho.ClientOptions
@@ -132,37 +131,23 @@ func (m *MQTT) Write(metrics []telegraf.Metric) error {
 		return nil
 	}
 
-  metricsmap := make(map[string][]telegraf.Metric)
+  if m.ApiTopic == "" {
+    m.ApiTopic = "api"
+  }
 
 	for _, metric := range metrics {
 
-		if m.BatchMessage {
-			metricsmap[m.TopicPrefix] = append(metricsmap[m.TopicPrefix], metric)
-		} else {
-			buf, err := serialize(metric, m.Username)
+	  buf, err := serialize(metric, m.ThingKey)
 
-			if err != nil {
-				return err
-			}
+		if err != nil {
+      return err
+		}
 
-			err = m.publish(m.TopicPrefix, buf)
+			err = m.publish(m.ApiTopic, buf)
 			if err != nil {
 				return fmt.Errorf("Could not write to MQTT server, %s", err)
 			}
-		}
-	}
-
-	for key := range metricsmap {
-		buf, err := serializeBatch(metricsmap[key], m.Username)
-
-		if err != nil {
-			return err
-		}
-		publisherr := m.publish(key, buf)
-		if publisherr != nil {
-			return fmt.Errorf("Could not write to MQTT server, %s", publisherr)
-		}
-	}
+  }
 
 	return nil
 }
@@ -202,11 +187,11 @@ func (m *MQTT) createOpts() (*paho.ClientOptions, error) {
 		opts.SetTLSConfig(tlsCfg)
 	}
 
-	user := m.Username
+	user := m.ThingKey
 	if user != "" {
 		opts.SetUsername(user)
 	}
-	password := m.Password
+	password := m.AppToken
 	if password != "" {
 		opts.SetPassword(password)
 	}
@@ -234,24 +219,6 @@ func serialize(metric telegraf.Metric, thingKey string) ([]byte, error) {
 	return serialized, nil
 }
 
-func serializeBatch(metrics []telegraf.Metric, thingKey string) ([]byte, error) {
-	objects := make([]interface{}, 0, len(metrics))
-	for _, metric := range metrics {
-		m := createObject(metric, thingKey)
-		objects = append(objects, m)
-	}
-
-	obj := map[string]interface{}{
-		"metrics": objects,
-	}
-
-	serialized, err := json.Marshal(obj)
-	if err != nil {
-		return []byte{}, err
-	}
-	return serialized, nil
-}
-
 func createObject(metric telegraf.Metric, thingKey string) map[string]interface{} {
 
   timestamp := metric.Time().Format(time.RFC3339)
@@ -263,9 +230,9 @@ func createObject(metric telegraf.Metric, thingKey string) map[string]interface{
 
   // Maps the fields to an array of key/value pairs
   var data[]map[string]interface{}
-	for key, value := range metric.Fields() {
-      keyname := tag + "-" + key
-      data = append(data,map[string]interface{}{"key": keyname, "value": value, "ts": timestamp})
+  for key, value := range metric.Fields() {
+    keyname := tag + "-" + key
+    data = append(data,map[string]interface{}{"key": keyname, "value": value, "ts": timestamp})
 	}
 
   m := map[string]interface{}{

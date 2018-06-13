@@ -8,7 +8,7 @@ This plugin writes to the [Wind River Helix Device Cloud](https://helixdeviceclo
   servers = ["helixdevicecloud.com:8883"]
 
   ## topic for producer messages
-  api_topic = "api"
+  #api_topic = "api"
 
   ## QoS policy for messages
   ##   0 = at most once
@@ -32,17 +32,11 @@ This plugin writes to the [Wind River Helix Device Cloud](https://helixdeviceclo
   # tls_key = "/etc/telegraf/key.pem"
   ## Use TLS but skip chain & host verification
   # insecure_skip_verify = false
-
-  ## When true, metrics will be sent in one MQTT message per flush.  Otherwise,
-  ## metrics are written one metric per MQTT message.
-  # batch = false
-
 ```
 
 ### Required parameters:
 
 * `servers`: List of strings, this is for speaking to a cluster of `mqtt` brokers. On each flush interval, Telegraf will randomly choose one of the urls to write to. Each URL should just include host and port e.g. -> `["{host}:{port}","{host2}:{port2}"]`
-* `topic_prefix`: The `mqtt` topic prefix to publish to. MQTT outputs send metrics to this topic format "<topic_prefix>/<hostname>/<pluginname>/" ( ex: prefix/web01.example.com/mem)
 * `qos`: The `mqtt` QoS policy for sending messages. See https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.0.0/com.ibm.mq.dev.doc/q029090_.htm for details.
 
 ### Optional parameters:
