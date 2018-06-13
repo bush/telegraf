@@ -17,22 +17,21 @@ import (
 )
 
 var sampleConfig = `
-  servers = ["localhost:1883"] # required.
+  ## URLs of mqtt brokers
+  servers = ["helixdevicecloud.com:8883"]
 
-  ## MQTT outputs send metrics to this topic format
-  ##    "<topic_prefix>/<hostname>/<pluginname>/"
-  ##   ex: prefix/web01.example.com/mem
-  topic_prefix = "telegraf"
+  ## topic for producer messages
+  #api_topic = "api"
 
   ## QoS policy for messages
   ##   0 = at most once
   ##   1 = at least once
   ##   2 = exactly once
-  # qos = 2
+  qos = 2
 
-  ## username and password to connect MQTT server.
-  # username = "telegraf"
-  # password = "metricsmetricsmetricsmetrics"
+  ## thing key and app token to connect to the MQTT API.
+  # thing_key = "my-thing-key"
+  # app_token = "my-app-token"
 
   ## client ID, if not set a random ID is generated
   # client_id = ""
@@ -46,16 +45,6 @@ var sampleConfig = `
   # tls_key = "/etc/telegraf/key.pem"
   ## Use TLS but skip chain & host verification
   # insecure_skip_verify = false
-
-  ## When true, metrics will be sent in one MQTT message per flush.  Otherwise,
-  ## metrics are written one metric per MQTT message.
-  # batch = false
-
-  ## Data format to output.
-  ## Each data format has its own unique set of configuration options, read
-  ## more about them here:
-  ## https://github.com/influxdata/telegraf/blob/master/docs/DATA_FORMATS_OUTPUT.md
-  data_format = "influx"
 `
 
 type MQTT struct {
