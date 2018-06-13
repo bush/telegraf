@@ -17,8 +17,8 @@ This plugin writes to the [Wind River Helix Device Cloud](https://helixdeviceclo
   qos = 2
 
   ## thing key and app token to connect to the MQTT API.
-  # thing_key = "my-thing-key"
-  # app_token = "my-app-token"
+  thing_key = "my-thing-key"
+  app_token = "my-app-token"
 
   ## client ID, if not set a random ID is generated
   # client_id = ""
