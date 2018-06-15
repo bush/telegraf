@@ -1,4 +1,4 @@
-package wrhdc
+package tr50
 
 import (
 	"fmt"
@@ -49,8 +49,8 @@ var sampleConfig = `
 
 type MQTT struct {
 	Servers     []string `toml:"servers"`
-	ThingKey    string
-	AppToken    string
+	Username    string
+	Password    string
 	Database    string
 	Timeout     internal.Duration
 	ApiTopic string
@@ -126,7 +126,7 @@ func (m *MQTT) Write(metrics []telegraf.Metric) error {
 
 	for _, metric := range metrics {
 
-	  buf, err := serialize(metric, m.ThingKey)
+	  buf, err := serialize(metric, m.Username)
 
 		if err != nil {
       return err
@@ -176,11 +176,11 @@ func (m *MQTT) createOpts() (*paho.ClientOptions, error) {
 		opts.SetTLSConfig(tlsCfg)
 	}
 
-	user := m.ThingKey
+	user := m.Username
 	if user != "" {
 		opts.SetUsername(user)
 	}
-	password := m.AppToken
+	password := m.Password
 	if password != "" {
 		opts.SetPassword(password)
 	}
@@ -251,7 +251,7 @@ func sanitize(value string) string {
 }
 
 func init() {
-	outputs.Add("wrhdc", func() telegraf.Output {
+	outputs.Add("tr50", func() telegraf.Output {
 		return &MQTT{}
 	})
 }

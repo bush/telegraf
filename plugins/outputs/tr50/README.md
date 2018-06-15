@@ -1,11 +1,11 @@
-# Wind River Helix Device Cloud Output Plugin
+# TR50 over MQTT Output Plugin
 
-This plugin writes to the [Wind River Helix Device Cloud](https://helixdevicecloud.com) MQTT API.
+This plugin provides an MQTT interface to a service provider which accepts TR50 telemetry.
 
 ```toml
-[[outputs.wrhdc]]
+[[outputs.tr50]]
   ## URLs of mqtt brokers
-  servers = ["helixdevicecloud.com:8883"]
+  servers = ["localhost:1883"]
 
   ## topic for producer messages
   #api_topic = "api"
@@ -16,9 +16,9 @@ This plugin writes to the [Wind River Helix Device Cloud](https://helixdeviceclo
   ##   2 = exactly once
   qos = 2
 
-  ## thing key and app token to connect to the MQTT API.
-  thing_key = "my-thing-key"
-  app_token = "my-app-token"
+  ## username and password to connect MQTT server.
+  # username = "my-username-or-thing-key"
+  # password = "my-password-or-app-token"
 
   ## client ID, if not set a random ID is generated
   # client_id = ""
@@ -40,9 +40,10 @@ This plugin writes to the [Wind River Helix Device Cloud](https://helixdeviceclo
 * `qos`: The `mqtt` QoS policy for sending messages. See https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.0.0/com.ibm.mq.dev.doc/q029090_.htm for details.
 
 ### Optional parameters:
-* `thing_key`: The username to connect MQTT server.
-* `app_token`: The password to connect MQTT server.
+* `username`: The username or thing key to connect MQTT server.
+* `password`: The password or app token to connect MQTT server.
 * `client_id`: The unique client id to connect MQTT server. If this paramater is not set then a random ID is generated.
+* `api_topic`: The `mqtt` telemetry topic to publish to. Defaults to `api` 
 * `timeout`: Timeout for write operations. default: 5s
 * `tls_ca`: TLS CA
 * `tls_cert`: TLS CERT

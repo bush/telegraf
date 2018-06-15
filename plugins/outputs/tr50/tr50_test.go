@@ -1,4 +1,4 @@
-package wrhdc
+package tr50
 
 import (
 	"testing"
