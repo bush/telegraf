@@ -313,3 +313,4 @@ formats may be used with input plugins supporting the `data_format` option:
 * [tcp](./plugins/outputs/socket_writer)
 * [udp](./plugins/outputs/socket_writer)
 * [wavefront](./plugins/outputs/wavefront)
+* [wind_river_systems_iot](./plugins/outputs/wrsiot)

@@ -1,4 +1,4 @@
-package tr50
+package wrsiot
 
 import (
 	"testing"

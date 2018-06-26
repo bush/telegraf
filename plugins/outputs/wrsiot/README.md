@@ -1,11 +1,11 @@
-# TR50 over MQTT Output Plugin
+# Wind River Helix Device Output Plugin
 
-This plugin provides an MQTT interface to a service provider which accepts TR50 telemetry.
+This plugin provides an MQTT interface to the Wind River Helix Device Cloud telemetry engine.
 
 ```toml
-[[outputs.tr50]]
+[[outputs.wrsiot]]
   ## URLs of mqtt brokers
-  servers = ["localhost:1883"]
+  servers = ["helix-device-cloud-mqtt-server:8883"]
 
   ## topic for producer messages
   #api_topic = "api"

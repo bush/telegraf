@@ -1,4 +1,4 @@
-package tr50
+package wrsiot
 
 import (
 	"fmt"
@@ -251,7 +251,7 @@ func sanitize(value string) string {
 }
 
 func init() {
-	outputs.Add("tr50", func() telegraf.Output {
+	outputs.Add("wrsiot", func() telegraf.Output {
 		return &MQTT{}
 	})
 }
