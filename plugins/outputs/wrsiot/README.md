@@ -1,6 +1,6 @@
-# Wind River Helix Device Output Plugin
+# WRS IoT Output Plugin
 
-This plugin provides an MQTT interface to the Wind River Helix Device Cloud telemetry engine.
+This plugin provides an MQTT interface to the WRS IoT telemetry engine.
 
 ```toml
 [[outputs.wrsiot]]
